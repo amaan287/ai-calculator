@@ -32,7 +32,7 @@ const ENV = process.env.ENV
 // Start the server
 {
     try {
-        app.listen(PORT, SERVER_URL, () => {
+        app.listen(PORT, () => {
             console.log(`Server running on http://localhost:${PORT}`);
             if (ENV === 'dev') {
                 console.log('Running in development mode');
