@@ -28,13 +28,12 @@ app.get("*", (req, res) => {
     res.sendFile(path.join(__dirname, "frontend", "dist", "index.html"));
 });
 const PORT = process.env.PORT
-const SERVER_URL = process.env.SERVER_URL
 const ENV = process.env.ENV
 // Start the server
 {
     try {
         app.listen(PORT, SERVER_URL, () => {
-            console.log(`Server running on http://${SERVER_URL}:${PORT}`);
+            console.log(`Server running on http://localhost:${PORT}`);
             if (ENV === 'dev') {
                 console.log('Running in development mode');
             }
