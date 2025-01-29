@@ -38,7 +38,7 @@ const validateImageData = (data) => {
     return errors;
 };
 
-module.exports = {
+export {
     imageDataValidation,
     validateImageData
 };

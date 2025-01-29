@@ -90,7 +90,4 @@ const analyzeImageHandler = async (req, res) => {
     }
 };
 
-module.exports = {
-    analyzeImage,
-    analyzeImageHandler
-};
+export { analyzeImage, analyzeImageHandler };
