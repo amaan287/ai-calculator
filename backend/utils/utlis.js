@@ -1,4 +1,3 @@
-// Import required dependencies
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { configDotenv } from 'dotenv';
 
@@ -34,14 +33,13 @@ async function analyzeImage(imageBuffer, dictOfVars) {
         Analyze the equation or expression in this image and return the answer according to the given rules: 
         Make sure to use extra backslashes for escape characters like \\f -> \\\\f, \\n -> \\\\n, etc. 
         Here is a dictionary of user-assigned variables. If the given expression has any of these variables, use its actual value from this dictionary accordingly: ${dictOfVarsStr}. 
-        DO NOT USE BACKTICKS OR MARKDOWN FORMATTING. 
-        PROPERLY QUOTE THE KEYS AND VALUES IN THE DICTIONARY FOR EASIER PARSING WITH JSON.parse.`;
+        RETURN ONLY THE JSON ARRAY WITH NO ADDITIONAL TEXT, MARKDOWN, OR FORMATTING.`;
 
         // Create image part from buffer
         const imagePart = {
             inlineData: {
                 data: imageBuffer.toString('base64'),
-                mimeType: 'image/jpeg' // Adjust mime type based on your image type
+                mimeType: 'image/jpeg'
             }
         };
 
@@ -49,23 +47,52 @@ async function analyzeImage(imageBuffer, dictOfVars) {
         const result = await model.generateContent([prompt, imagePart]);
         const response = await result.response;
         const text = response.text();
-        console.log(text);
 
-        // Parse the response
+        // Clean the response text by removing markdown formatting
+        const cleanedText = text
+            .replace(/```json\n?/g, '') // Remove ```json
+            .replace(/```\n?/g, '')     // Remove closing ```
+            .trim();                    // Remove any extra whitespace
+
+        console.log('Cleaned response:', cleanedText);
+
+        // Parse the cleaned response
         let answers = [];
         try {
-            answers = JSON.parse(text);
+            answers = JSON.parse(cleanedText);
         } catch (error) {
-            console.error(`Error parsing response from Gemini API: ${error}`);
+            console.error(`Error parsing cleaned response: ${error}`);
+            console.error('Attempted to parse:', cleanedText);
+
+            // Fallback: Try to extract JSON array using regex
+            const jsonMatch = cleanedText.match(/\[.*\]/s);
+            if (jsonMatch) {
+                try {
+                    answers = JSON.parse(jsonMatch[0]);
+                } catch (error) {
+                    console.error('Fallback parsing failed:', error);
+                }
+            }
         }
 
-        console.log('returned answer ', answers);
+        // Validate the answers structure
+        if (!Array.isArray(answers)) {
+            console.error('Invalid response format - expected array');
+            return [];
+        }
 
-        // Process answers
-        return answers.map(answer => ({
-            ...answer,
-            assign: answer.assign || false
-        }));
+        // Process and validate each answer
+        return answers.map(answer => {
+            if (!answer || typeof answer !== 'object') {
+                console.error('Invalid answer format:', answer);
+                return null;
+            }
+            return {
+                expr: answer.expr || '',
+                result: answer.result,
+                assign: answer.assign || false
+            };
+        }).filter(Boolean); // Remove any null entries
 
     } catch (error) {
         console.error('Error in analyzeImage:', error);
@@ -73,7 +100,7 @@ async function analyzeImage(imageBuffer, dictOfVars) {
     }
 }
 
-// Express route handler example
+// Express route handler
 const analyzeImageHandler = async (req, res) => {
     try {
         if (!req.file) {
@@ -82,11 +109,22 @@ const analyzeImageHandler = async (req, res) => {
 
         const dictOfVars = req.body.variables || {};
         const results = await analyzeImage(req.file.buffer, dictOfVars);
+
+        if (!results.length) {
+            return res.status(422).json({
+                error: 'Unable to process image response',
+                message: 'The image analysis did not return any valid results'
+            });
+        }
+
         res.json(results);
 
     } catch (error) {
         console.error('Error handling image analysis:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({
+            error: 'Internal server error',
+            message: error.message
+        });
     }
 };
 

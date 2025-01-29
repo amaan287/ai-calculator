@@ -22,7 +22,7 @@ app.get('/', (req, res) => {
 });
 
 // Register calculator routes
-app.use('/calculate', calculatorRouter);
+app.use('/api/v1/calculate', calculatorRouter);
 const PORT = process.env.PORT
 const SERVER_URL = process.env.SERVER_URL
 const ENV = process.env.ENV
