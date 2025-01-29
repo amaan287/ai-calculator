@@ -52,7 +52,7 @@ async function analyzeImage(imageBuffer, dictOfVars) {
         const cleanedText = text
             .replace(/```json\n?/g, '')
             .replace(/```\n?/g, '')
-            .trim();                    // Remove any extra whitespace
+
 
         console.log('Cleaned response:', cleanedText);
 

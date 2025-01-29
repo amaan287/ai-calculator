@@ -1,11 +1,12 @@
 {
-  "name": "backend",
+  "name": "ai-calc",
   "version": "1.0.0",
   "main": "index.js",
   "type": "module",
   "scripts": {
     "dev": "nodemon index.js",
-    "start": "node index.js"
+    "build": "npm install && npm install --prefix frontend && npm run build --prefix frontend",
+    "start": "node backend index.js"
   },
   "keywords": [],
   "author": "",
@@ -17,6 +18,7 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "express-validator": "^7.2.1",
-    "nodemon": "^3.1.9"
+    "nodemon": "^3.1.9",
+    "path": "^0.12.7"
   }
 }

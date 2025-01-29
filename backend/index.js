@@ -3,9 +3,12 @@ import express from 'express'
 import cors from 'cors'
 import calculatorRouter from './routes/calculator.routes.js'
 import { configDotenv } from 'dotenv';
+import path from 'path';
 
 configDotenv.apply()
 const app = express();
+const __dirname = path.resolve();
+
 app.use(cors({
     origin: '*',
     credentials: true,
@@ -16,13 +19,14 @@ app.use(cors({
 // Parse JSON bodies
 app.use(express.json());
 
-// Root endpoint
-app.get('/', (req, res) => {
-    res.json({ message: "Server is running" });
-});
 
 // Register calculator routes
 app.use('/api/v1/calculate', calculatorRouter);
+
+app.use(express.static(path.join(__dirname, "/frontend/dist")));
+app.get("*", (req, res) => {
+    res.sendFile(path.join(__dirname, "frontend", "dist", "index.html"));
+});
 const PORT = process.env.PORT
 const SERVER_URL = process.env.SERVER_URL
 const ENV = process.env.ENV
