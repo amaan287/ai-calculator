@@ -48,10 +48,10 @@ async function analyzeImage(imageBuffer, dictOfVars) {
         const response = await result.response;
         const text = response.text();
 
-        // Clean the response text by removing markdown formatting
+
         const cleanedText = text
-            .replace(/```json\n?/g, '') // Remove ```json
-            .replace(/```\n?/g, '')     // Remove closing ```
+            .replace(/```json\n?/g, '')
+            .replace(/```\n?/g, '')
             .trim();                    // Remove any extra whitespace
 
         console.log('Cleaned response:', cleanedText);
