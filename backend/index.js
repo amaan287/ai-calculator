@@ -1,4 +1,3 @@
-// Import required dependencies
 import express from 'express'
 import cors from 'cors'
 import calculatorRouter from './routes/calculator.routes.js'
@@ -16,11 +15,9 @@ app.use(cors({
     allowedHeaders: '*'
 }));
 
-// Parse JSON bodies
 app.use(express.json());
 
 
-// Register calculator routes
 app.use('/api/v1/calculate', calculatorRouter);
 
 app.use(express.static(path.join(__dirname, "/frontend/dist")));
@@ -29,13 +26,15 @@ app.get("*", (req, res) => {
 });
 const PORT = process.env.PORT
 const ENV = process.env.ENV
-// Start the server
 {
     try {
         app.listen(PORT, () => {
             console.log(`Server running on http://localhost:${PORT}`);
             if (ENV === 'dev') {
                 console.log('Running in development mode');
+            }
+            if (ENV === 'production') {
+                console.log('Running in production mode');
             }
         });
     } catch (error) {
