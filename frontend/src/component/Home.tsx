@@ -27,12 +27,6 @@ export default function Home() {
   const [latexPosition, setLatexPosition] = useState({ x: 10, y: 200 });
   const [latexExpression, setLatexExpression] = useState<Array<string>>([]);
 
-  // const lazyBrush = new LazyBrush({
-  //     radius: 10,
-  //     enabled: true,
-  //     initialPoint: { x: 0, y: 0 },
-  // });
-
   useEffect(() => {
     if (latexExpression.length > 0 && window.MathJax) {
       setTimeout(() => {
@@ -90,7 +84,18 @@ export default function Home() {
       document.head.removeChild(script);
     };
   }, []);
+  const getCanvasPosition = (clientX: number, clientY: number) => {
+    const canvas = canvasRef.current;
 
+    if (!canvas) return { x: 0, y: 0 };
+
+    const rect = canvas.getBoundingClientRect();
+
+    return {
+      x: clientX - rect.left,
+      y: clientY - rect.top,
+    };
+  };
   const renderLatexToCanvas = (expression: string, answer: string) => {
     const latex = `\\(\\LARGE{${expression} = ${answer}}\\)`;
     setLatexExpression([...latexExpression, latex]);
@@ -115,19 +120,19 @@ export default function Home() {
     }
   };
 
-  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const startDrawing = (x: number, y: number) => {
     const canvas = canvasRef.current;
     if (canvas) {
       canvas.style.background = "black";
       const ctx = canvas.getContext("2d");
       if (ctx) {
         ctx.beginPath();
-        ctx.moveTo(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+        ctx.lineTo(x, y);
         setIsDrawing(true);
       }
     }
   };
-  const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const draw = (x: number, y: number) => {
     if (!isDrawing) {
       return;
     }
@@ -136,7 +141,7 @@ export default function Home() {
       const ctx = canvas.getContext("2d");
       if (ctx) {
         ctx.strokeStyle = color;
-        ctx.lineTo(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+        ctx.lineTo(x, y);
         ctx.stroke();
       }
     }
@@ -145,6 +150,27 @@ export default function Home() {
     setIsDrawing(false);
   };
 
+  const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    startDrawing(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    draw(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const pos = getCanvasPosition(touch.clientX, touch.clientY);
+    startDrawing(pos.x, pos.y);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const pos = getCanvasPosition(touch.clientX, touch.clientY);
+    draw(pos.x, pos.y);
+  };
   const runRoute = async () => {
     const canvas = canvasRef.current;
 
@@ -236,11 +262,14 @@ export default function Home() {
       <canvas
         ref={canvasRef}
         id="canvas"
-        className="absolute top-0 left-0 w-full h-full"
-        onMouseDown={startDrawing}
-        onMouseMove={draw}
+        className="absolute top-0 left-0 w-full h-full touch-none"
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
         onMouseUp={stopDrawing}
         onMouseOut={stopDrawing}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={stopDrawing}
       />
 
       {latexExpression &&
